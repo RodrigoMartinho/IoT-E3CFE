@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa - Fazenda IFSP Catanduva</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        crossorigin=""
+    />
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Painel de informações */
+        .map-header {
+            position: absolute;
+            z-index: 1000;
+            top: 20px;
+            left: 20px;
+            max-width: 360px;
+            padding: 16px 18px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.22);
+        }
+
+        .map-header h1 {
+            margin: 0 0 5px;
+            font-size: 20px;
+            color: #222;
+        }
+
+        .map-header p {
+            margin: 0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Legenda */
+        .legend {
+            position: absolute;
+            z-index: 1000;
+            right: 20px;
+            bottom: 30px;
+            min-width: 205px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.22);
+        }
+
+        .legend-title {
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 8px 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .legend-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #555;
+            font-size: 17px;
+        }
+
+        /* Ícones dos pontos */
+        .custom-marker {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+        }
+
+        .custom-marker span {
+            transform: rotate(45deg);
+            font-size: 19px;
+        }
+
+        .animal-marker {
+            border-color: #8b4513;
+        }
+
+        .equipment-marker {
+            border-color: #555;
+        }
+
+        .environment-marker {
+            border-color: #228b22;
+        }
+
+        /* Ajuste para telas pequenas */
+        @media (max-width: 600px) {
+            .map-header {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+
+            .map-header h1 {
+                font-size: 17px;
+            }
+
+            .legend {
+                right: 10px;
+                bottom: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="map-header">
+        <h1>Fazenda IFSP - Catanduva</h1>
+        <p>Mapa da propriedade e pontos de localização</p>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="legend">
+        <div class="legend-title">Legenda</div>
+
+        <div class="legend-item">
+            <div class="legend-icon">🐄</div>
+            <span>Animal</span>
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-icon">🚜</div>
+            <span>Equipamento</span>
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-icon">🌱</div>
+            <span>Monitoramento ambiental</span>
+        </div>
+    </div>
+
+    <!-- Leaflet -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="">
+    </script>
+
+    <script>
+        // =========================================================
+        // CONFIGURAÇÃO DO MAPA
+        // =========================================================
+
+        // Coordenadas centrais aproximadas da propriedade
+        const centro = [-21.14645, -48.94620];
+
+        const map = L.map('map', {
+            zoomControl: true
+        }).setView(centro, 20);
+
+        // =========================================================
+        // IMAGEM DE SATÉLITE
+        // =========================================================
+
+        L.tileLayer(
+            'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            {
+                attribution: '&copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+                maxZoom: 19,
+                maxNativeZoom: 18,
+                crossOrigin: true
+            }
+        ).addTo(map);
+
+        // Se algum tile falhar, o restante do mapa continua funcionando.
+        // Isso evita que uma falha pontual do servidor de imagens quebre o mapa.
+        map.on('tileerror', function () {
+            console.warn('Não foi possível carregar um dos tiles de satélite.');
+        });
+
+        // =========================================================
+        // LIMITE DA PROPRIEDADE
+        // =========================================================
+
+        const limiteFazenda = [
+            [-21.14705993, -48.94732765],
+            [-21.14782535, -48.94674762],
+            [-21.14703691, -48.94552583],
+            [-21.14762968, -48.94509389],
+            [-21.14708871, -48.94436576],
+            [-21.14658226, -48.94479770],
+            [-21.14503988, -48.94580968],
+            [-21.14662830, -48.94701295],
+            [-21.14705993, -48.94732765]
+        ];
+
+        const propriedade = L.polygon(limiteFazenda, {
+            color: '#00ff66',
+            weight: 3,
+            opacity: 1,
+            fillColor: '#00ff66',
+            fillOpacity: 0.12
+        }).addTo(map);
+
+        propriedade.bindPopup(`
+            <strong>Fazenda IFSP - Catanduva</strong><br>
+            Limite da propriedade
+        `);
+
+        // =========================================================
+        // FUNÇÃO PARA CRIAR ÍCONES
+        // =========================================================
+
+        function criarIcone(emoji, classe) {
+            return L.divIcon({
+                className: '',
+                html: `
+                    <div class="custom-marker ${classe}">
+                        <span>${emoji}</span>
+                    </div>
+                `,
+                iconSize: [38, 38],
+                iconAnchor: [19, 38],
+                popupAnchor: [0, -38]
+            });
+        }
+
+        // =========================================================
+        // 1. ANIMAL
+        // =========================================================
+
+        const animal = L.marker(
+            [-21.146369, -48.946562],
+            {
+                icon: criarIcone('🐄', 'animal-marker'),
+                title: 'Animal'
+            }
+        ).addTo(map);
+
+        animal.bindPopup(`
+            <strong>🐄 Animal</strong><br>
+            <br>
+            <strong>Localização:</strong><br>
+            Latitude: -21.146369<br>
+            Longitude: -48.946562
+        `);
+
+        // =========================================================
+        // 2. EQUIPAMENTO
+        // =========================================================
+
+        const equipamento = L.marker(
+            [-21.146066, -48.945560],
+            {
+                icon: criarIcone('🚜', 'equipment-marker'),
+                title: 'Equipamento'
+            }
+        ).addTo(map);
+
+        equipamento.bindPopup(`
+            <strong>🚜 Equipamento</strong><br>
+            <br>
+            <strong>Localização:</strong><br>
+            Latitude: -21.146066<br>
+            Longitude: -48.945560
+        `);
+
+        // =========================================================
+        // 3. MONITORAMENTO AMBIENTAL
+        // =========================================================
+
+        const monitoramento = L.marker(
+            [-21.146879, -48.945680],
+            {
+                icon: criarIcone('🌱', 'environment-marker'),
+                title: 'Monitoramento ambiental'
+            }
+        ).addTo(map);
+
+        monitoramento.bindPopup(`
+            <strong>🌱 Monitoramento ambiental</strong><br>
+            <br>
+            <strong>Localização:</strong><br>
+            Latitude: -21.146879<br>
+            Longitude: -48.945680
+        `);
+
+        // =========================================================
+        // AJUSTAR O ZOOM AUTOMATICAMENTE PARA A PROPRIEDADE
+        // =========================================================
+
+        map.fitBounds(propriedade.getBounds(), {
+            padding: [20, 20]
+        });
+
+    </script>
+
+</body>
+</html>
