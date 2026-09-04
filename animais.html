@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma IoT SmartFarm - Animais</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Arquivo de Funções JavaScript Globais -->
+    <script src="js/script.js"></script>
+</head>
+<body style="background: transparent; padding: 1.5rem;">
+
+    <div class="content-header">
+        <h2>Gestão de Animais</h2>
+        <button class="btn-novo" onclick="incluir('Cadastrar Novo Animal')">+ Novo Animal</button>
+    </div>
+    <p>Lista dos animais monitorados pelos sensores IoT da fazenda</p>
+    <br>
+
+    <div id="modal-cadastro" class="modal-overlay" style="display: none;">
+        <div class="modal-conteudo">
+            <div class="modal-header">
+                <h3 id="titulo-modal">Cadastrar Novo Animal</h3>
+            </div>
+            <form id="form-animal">
+                <div class="form-grupo">
+                    <label for="ID">ID</label>
+                    <input type="text" id="ID" placeholder="007">
+                </div>
+                <div class="form-grupo">
+                    <label for="especie">Espécie</label>
+                    <input type="text" id="especie">
+                </div>
+                <div class="form-grupo">
+                    <label for="idade">Idade</label>
+                    <input type="text" id="idade">
+                </div>
+                <div class="form-grupo">
+                    <label for="temperatura">Temperatura</label>
+                    <input type="text" id="temperatura">
+                </div>
+                <div class="form-grupo">
+                    <label for="status">Status</label>
+                    <input type="text" id="status">
+                </div>
+
+                <div class="form-botoes">
+                    <button type="button" class="btn-salvar" onclick="salvar()">Salvar</button>
+                    <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <table class="tabela-dados">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Espécie</th>
+                <th>Idade</th>
+                <th>Temperatura</th>
+                <th>Status</th>
+                <th style="width: 100px; text-align: center;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        const dadosIniciais = [
+            { ID: "001", especie: "Bovino (Vaca)", idade: "3 anos", temperatura: "38.5 ºC", status: "Saudável" },
+            { ID: "002", especie: "Bovino (Boi)", idade: "2 anos", temperatura: "39.1 ºC", status: "Em Observação" },
+            { ID: "005", especie: "Caprino (Cabra)", idade: "1 ano", temperatura: "38.8 ºC", status: "Saudável" }
+        ];
+
+        function carregarDados() {
+            const tbody = document.querySelector('.tabela-dados tbody');
+            tbody.innerHTML = '';
+
+            dadosIniciais.forEach(item => {
+                const novaLinha = document.createElement('tr');
+                novaLinha.innerHTML = `
+                    <td>${item.ID}</td>
+                    <td>${item.especie}</td>
+                    <td>${item.idade}</td>
+                    <td>${item.temperatura}</td>
+                    <td>${item.status}</td>
+                    <td>
+                        <div class="acoes-container">
+                            <button type="button" class="btn-icon btn-editar" title="Editar" onclick="alterar(this)">
+                                <img src="img/alterar.png" alt="Editar" class="icon-img">
+                            </button>
+                            <button type="button" class="btn-icon btn-excluir" title="Excluir" onclick="excluir(this, 'Deseja realmente excluir este animal?')">
+                                <img src="img/excluir.png" alt="Excluir" class="icon-img">
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(novaLinha);
+            });
+        }
+
+        function alterar(botao) {
+            linhaEmEdicao = botao.closest('tr');
+            const colunas = linhaEmEdicao.querySelectorAll('td');
+
+            document.getElementById('ID').value = colunas[0].innerText;
+            document.getElementById('especie').value = colunas[1].innerText;
+            document.getElementById('idade').value = colunas[2].innerText;
+            document.getElementById('temperatura').value = colunas[3].innerText;
+            document.getElementById('status').value = colunas[4].innerText;
+
+            document.getElementById('titulo-modal').innerText = 'Editar Animal';
+            abrirModal();
+        }
+
+        function salvar() {
+            const ID = document.getElementById('ID').value;
+            const especie = document.getElementById('especie').value;
+            const idade = document.getElementById('idade').value;
+            const temperatura = document.getElementById('temperatura').value;
+            const status = document.getElementById('status').value;
+
+            if (!ID || !especie) {
+                alert('Por favor, preencha o ID e a Espécie!');
+                return;
+            }
+
+            const htmlBotoesAcao = `
+                <div class="acoes-container">
+                    <button type="button" class="btn-icon btn-editar" title="Editar" onclick="alterar(this)">
+                        <img src="img/alterar.png" alt="Editar" class="icon-img">
+                    </button>
+                    <button type="button" class="btn-icon btn-excluir" title="Excluir" onclick="excluir(this, 'Deseja realmente excluir este animal?')">
+                        <img src="img/excluir.png" alt="Excluir" class="icon-img">
+                    </button>
+                </div>
+            `;
+
+            const htmlConteudoLinha = `
+                <td>${ID}</td>
+                <td>${especie}</td>
+                <td>${idade || '-'}</td>
+                <td>${temperatura || '-'}</td>
+                <td>${status || 'Saudável'}</td>
+                <td>${htmlBotoesAcao}</td>
+            `;
+
+            if (linhaEmEdicao) {
+                linhaEmEdicao.innerHTML = htmlConteudoLinha;
+                linhaEmEdicao = null;
+            } else {
+                const tbody = document.querySelector('.tabela-dados tbody');
+                const novaLinha = document.createElement('tr');
+                novaLinha.innerHTML = htmlConteudoLinha;
+                tbody.appendChild(novaLinha);
+            }
+
+            document.getElementById('form-animal').reset();
+            fecharModal();
+        }
+
+        window.onload = carregarDados;
+    </script>
+
+</body>
+</html>

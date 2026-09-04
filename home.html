@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma IoT SmartFarm - Painel Principal</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-brand">
+            <img src="img/logotipo.png" alt="Logo SmartFarm" class="header-logo">
+            <h1>Plataforma SmartFarm IoT</h1>
+        </div>
+        <a href="index.html" class="logout-btn">Sair</a>
+    </header>
+
+    <div class="layout-container">
+        <aside class="sidebar">
+            <h3>Menu</h3>
+            <ul>
+                <li><a href="dashboard.html" target="conteudo-frame"><img src="img/logotipo.png" alt="Início" class="menu-icon"> Início</a></li>
+                <li><a href="animais.html" target="conteudo-frame"><img src="img/animal.png" alt="Animais" class="menu-icon"> Animais</a></li>
+                <li><a href="equipamentos.html" target="conteudo-frame"><img src="img/equipamento.png" alt="Equipamentos" class="menu-icon"> Equipamentos</a></li>
+                <li><a href="ambiente.html" target="conteudo-frame"><img src="img/ambiente.png" alt="Ambiente" class="menu-icon"> Meio ambiente</a></li>
+            </ul>
+        </aside>
+
+        <main class="content-frame-container">
+            <iframe name="conteudo-frame" src="dashboard.html" class="app-iframe"></iframe>
+        </main>
+
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2026 SmartFarm IoT - Todos os direitos reservados.</p>
+    </footer>
+
+</body>
+</html>
